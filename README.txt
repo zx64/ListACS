@@ -1,3 +1,8 @@
+Note: I've moved files around to make this primarily an importable library
+
+
+Original readme:
+
 --- ZDoom ACS disassembler/decompiler ---
 
 Requires Python version 2.5 or later: http://www.python.org
