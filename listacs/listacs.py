@@ -296,8 +296,9 @@ def main():
                 print('%s%s' % (comment, lin), file=output)
 
 
-if sys.hexversion < 0x3070000:
-    print('This script requires Python 3.7 or newer')
-    exit(1)
+if __name__ == "__main__":
+    if sys.hexversion < 0x3070000:
+        print('This script requires Python 3.7 or newer')
+        exit(1)
 
-main()
+    main()
