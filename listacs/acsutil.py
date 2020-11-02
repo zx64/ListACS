@@ -105,7 +105,7 @@ def read_strings(data, pos, ipos):
 
         epos = data.find(b'\0', spos)
         if epos != -1:
-            cstr = data[spos: epos]
+            cstr = data[spos: epos].decode("us-ascii")
         else:
             cstr = ''
         strings.append(cstr)
