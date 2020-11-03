@@ -182,8 +182,11 @@ class Marker(object):
     def getlabel(self):
         return self.label
 
+    def getbytes(self):
+        return self.data[self.ptr:self.end]
+
     def __repr__(self):
-        return 'Marker("%s", data[%d:%d])' % (self.label, self.ptr, self.end)
+        return 'Marker("%s", data[%d:%d], len = %d)' % (self.label, self.ptr, self.end, self.end - self.ptr)
 
 class Script(Marker):
     executable = True
