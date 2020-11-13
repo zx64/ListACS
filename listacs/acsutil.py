@@ -223,7 +223,7 @@ class Script(Marker):
                (self.num, argstr, self.ptr, self.flags)
 
     def __repr__(self):
-        return 'Script(%d, %d, %d, %d)' % (self.num, self.type, self.ptr, self.argc)
+        return 'Script(num=%d, type=%d, data=[%d:%d], len=%d, argc=%d)' % (self.num, self.type, self.ptr, self.end, self.end - self.ptr, self.argc)
 
 
 class Function(Marker):
