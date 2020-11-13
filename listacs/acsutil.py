@@ -149,6 +149,40 @@ class Marker(object):
         self.data = ''
         self.little = False
 
+
+    def opcodes(self):
+        if not self.data or not self.executable:
+            return
+        little = self.little
+        end = self.end
+        io = ScriptIO(self.data, little, self.ptr, end)
+        io.begin = 0
+
+        if little:
+            def nextpcd(io):
+                pcd = readub(io)
+                if pcd >= 240:
+                    pcd = 240 + ((pcd - 240) << 8) + readub(io)
+                return pcd
+        else:
+            nextpcd = readui
+
+        try:
+            npcodes = len(pcodes)
+            while io.addr < end:
+                pcd = nextpcd(io)
+
+                if pcd >= npcodes:
+                    continue
+
+                try:
+                    yield pcd, [ac.parse(io) for ac in pcodes[pcd].codes]
+                except AttributeError:
+                    yield pcd, []
+        except EOFError:
+            return
+
+
     def disassemble(self):
         yield '%10d: %s' % (self.ptr, self.getlabel())
         if self.data and self.executable:
