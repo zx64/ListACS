@@ -170,15 +170,16 @@ class Marker(object):
         try:
             npcodes = len(pcodes)
             while io.addr < end:
+                opaddr = io.addr - io.begin
                 pcd = nextpcd(io)
 
                 if pcd >= npcodes:
                     continue
 
                 try:
-                    yield (pcd,) + tuple(ac.parse(io) for ac in pcodes[pcd].codes)
+                    yield (opaddr, (pcd,) + tuple(ac.parse(io) for ac in pcodes[pcd].codes))
                 except AttributeError:
-                    yield (pcd,)
+                    yield (opaddr, (pcd,))
         except EOFError:
             return
 
