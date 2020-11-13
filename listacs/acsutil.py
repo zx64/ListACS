@@ -176,9 +176,9 @@ class Marker(object):
                     continue
 
                 try:
-                    yield pcd, [ac.parse(io) for ac in pcodes[pcd].codes]
+                    yield (pcd,) + tuple(ac.parse(io) for ac in pcodes[pcd].codes)
                 except AttributeError:
-                    yield pcd, []
+                    yield (pcd,)
         except EOFError:
             return
 
