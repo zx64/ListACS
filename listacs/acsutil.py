@@ -230,19 +230,16 @@ class Script(Marker):
     def __init__(self, ptr, num, type, argc):
         Marker.__init__(self, ptr)
         self.num = num
-        self.type = type
+        try:
+            self.type = ScriptTypes(type)
+        except ValueError:
+            self.type = ScriptTypes.UNKNOWN
         self.argc = argc
         self.flags = 0
 
-    def get_type(self):
-        try:
-            return script_types[self.type] or "UNKNOWN"
-        except IndexError:
-            return "UNKNOWN"
-
     def getlabel(self):
         return 'script %d, type = %d (%s), flags = %04x, argc = %d' % \
-               (self.num, self.type, self.get_type(), self.flags, self.argc)
+               (self.num, self.type, self.type.name, self.flags, self.argc)
 
     def getheader(self):
         if self.argc:
@@ -252,14 +249,14 @@ class Script(Marker):
 
         if self.type > 0:
             if self.argc:
-                argstr = '%s %s' % (argstr, self.get_type())
+                argstr = '%s %s' % (argstr, self.type.name)
             else:
-                argstr = self.get_type()
+                argstr = self.type.name
         return 'script %d %s // addr = %d, flags=%04x' % \
                (self.num, argstr, self.ptr, self.flags)
 
     def __repr__(self):
-        return 'Script(num=%d, type=%d, data=[%d:%d], len=%d, argc=%d)' % (self.num, self.type, self.ptr, self.end, self.end - self.ptr, self.argc)
+        return 'Script(num=%d, type=%s, data=[%d:%d], len=%d, argc=%d)' % (self.num, self.type.name, self.ptr, self.end, self.end - self.ptr, self.argc)
 
 
 class Function(Marker):
@@ -704,7 +701,7 @@ class Parser(ScriptIO):
 
         if pcd >= len(pcodes):
             print("Unsupported pcode {}".format(pcd))
-            pcd = pcodes[pcode_index['TERMINATE']]
+            pcd = pcodes[OPCodes['TERMINATE']]
         else:
             pcd = pcodes[pcd]
 
@@ -1557,7 +1554,7 @@ class LineSpec(BuiltinCall):
         self.lspec = inst_args[0]
         specname = None
         if self.lspec < 255:
-            specname = linespecials[self.lspec]
+            specname = LineSpecials(self.lspec).name
 
         if specname is None:
             specname = 'LineSpec%d' % self.lspec
@@ -1698,10 +1695,10 @@ class PushBytesPCode(PCode):
 
 
 def genpcodes():
-    pcodes = [None] * len(pcode_names)
+    pcodes = [None] * len(OPCodes)
 
     def addpcode(pcode):
-        idx = pcode_index[pcode.name]
+        idx = OPCodes[pcode.name]
         pcode.index = idx
         pcodes[idx] = pcode
 
@@ -2011,7 +2008,7 @@ def genpcodes():
     return pcodes
 
 
-pcode_names = [
+OPCodes = enum.IntEnum("OPCodes", names=[
     'NOP', 'TERMINATE', 'SUSPEND',
     'PUSHNUMBER', 'LSPEC1', 'LSPEC2', 'LSPEC3',
     'LSPEC4', 'LSPEC5', 'LSPEC1DIRECT', 'LSPEC2DIRECT',
@@ -2128,11 +2125,10 @@ pcode_names = [
     'THINGCOUNTSECTOR', 'THINGCOUNTNAMESECTOR',
     'CHECKPLAYERCAMERA', 'MORPHACTOR', 'UNMORPHACTOR',
     'GETPLAYERINPUT', 'CLASSIFYACTOR', 'PRINTBINARY',
-    'PRINTHEX','CALLFUNC','STRPARAM']
+    'PRINTHEX','CALLFUNC','STRPARAM'], start=0)
 
-OPCodes = enum.IntEnum("OPCodes", " ".join(pcode_names), start=0)
-
-linespecials = [
+LineSpecials = enum.IntEnum("LineSpecials", names=[(name,idx) for (idx,name) in
+    enumerate([
     None, None, 'Polyobj_RotateLeft',
     'Polyobj_RotateRight', 'Polyobj_Move', None, 'Polyobj_MoveTimes8',
     'Polyobj_DoorSwing', 'Polyobj_DoorSlide', 'Line_Horizon',
@@ -2206,27 +2202,24 @@ linespecials = [
     'Elevator_LowerToNearest', 'HealThing', 'Door_CloseWaitOpen',
     'Floor_Donut', 'FloorAndCeiling_LowerRaise', 'Ceiling_RaiseToNearest',
     'Ceiling_LowerToLowest', 'Ceiling_LowerToFloor',
-    'Ceiling_CrushRaiseAndStaySilA']
+    'Ceiling_CrushRaiseAndStaySilA']) if name is not None])
 
-script_types = [
+class ScriptTypes(enum.IntEnum):
+    UNKNOWN = -1
+    NORMAL = 0
+    OPEN = 1
+    RESPAWN = 2
+    DEATH = 3
+    ENTER = 4
+    PICKUP = 5
+    BLUE = 6
+    RED = 7
+    WHITE = 8
+    LIGHTNING = 12
+    UNLOADING = 13
+    DISCONNECT = 14
+    RETURN = 15
 
-    "NORMAL",
-    "OPEN",
-    "RESPAWN",
-    "DEATH",
-    "ENTER",
-    "PICKUP",
-    "BLUE",
-    "RED",
-    "WHITE",
-    None,
-    None,
-    None,
-    "LIGHTNING",
-    "UNLOADING",
-    "DISCONNECT",
-    "RETURN"
-]
 
 #Actors properties
 #References:
@@ -2283,12 +2276,4 @@ aprop_names = [
     ('APROP_DamageType', True),
 ]
 
-pcode_index = {}
-g = globals()
-for i, n in enumerate(pcode_names):
-    g['PCD_' + n] = i
-    pcode_index[n] = i
-
 pcodes = genpcodes()
-
-del i, n, g
