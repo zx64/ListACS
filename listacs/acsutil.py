@@ -27,6 +27,7 @@
 
 """ZDoom ACS utilities"""
 
+import enum
 import struct
 import copy
 import sys
@@ -177,9 +178,9 @@ class Marker(object):
                     continue
 
                 try:
-                    yield (opaddr, (pcd,) + tuple(ac.parse(io) for ac in pcodes[pcd].codes))
+                    yield (opaddr, (OPCodes(pcd),) + tuple(ac.parse(io) for ac in pcodes[pcd].codes))
                 except AttributeError:
-                    yield (opaddr, (pcd,))
+                    yield (opaddr, (OPCodes(pcd),))
         except EOFError:
             return
 
@@ -2128,6 +2129,8 @@ pcode_names = [
     'CHECKPLAYERCAMERA', 'MORPHACTOR', 'UNMORPHACTOR',
     'GETPLAYERINPUT', 'CLASSIFYACTOR', 'PRINTBINARY',
     'PRINTHEX','CALLFUNC','STRPARAM']
+
+OPCodes = enum.IntEnum("OPCodes", " ".join(pcode_names), start=0)
 
 linespecials = [
     None, None, 'Polyobj_RotateLeft',
